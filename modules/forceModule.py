@@ -18,3 +18,4 @@ def torDamp(cr, qiDot, i, j):
     Q_DampThetaj = cr*deltaOmega
 
     return Q_DampThetai, Q_DampThetaj
+

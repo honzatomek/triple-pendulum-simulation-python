@@ -1,38 +1,38 @@
 '''
  Copyright (c) 2022, EBS/MakotoYu95
  Multidynamics program for educational purposes.
- 
+
  The scripts simulates a TRIPLE PENDULUM given the following user input
  1. Length of all 3 links [m]
  2. Mass of all 3 links [kg]
  3. Simulation time settings [s]
  4. External force elements (see README.md for system model)
- 5. Initial conditions for each independent coordinates (in this case, 
+ 5. Initial conditions for each independent coordinates (in this case,
     the angle of all links w.r.t. the vertical line) [rad]
- 
- You may play with these variables on the USER INPUT PARAMETERS 
+
+ You may play with these variables on the USER INPUT PARAMETERS
  section (lines just after importing modules).
 
- To run the script, simply enter the 
- following usage to the terminal: 
- 
+ To run the script, simply enter the
+ following usage to the terminal:
+
     python main_tp.py
 
  This script is a demonstration for computational dynamics
- from scratch, which means no specific libraries are used: just 
+ from scratch, which means no specific libraries are used: just
  pure implementation of multibody dynamics.
 
  Understanding dynamics and its complexities can give you
- a certain appreciation and awe to how software libraries with multibody 
+ a certain appreciation and awe to how software libraries with multibody
  dynamics physics engine actually work to generate various solid
  mechanical system. This script, in the other hand, is merely hard
  coded to the specified model on the README.md.
- 
+
  Happy hacking!!
 '''
 
 # import necessary modules
-import numpy as np  
+import numpy as np
 import matplotlib.pyplot  as plt
 from modules import calcModuleTP       as calMod
 from modules import constraintModuleTP as conMod
@@ -44,7 +44,7 @@ from modules.calcModuleTP import link2index as l2i, prettyMatVect2
 # ======================================================
 link1, link2, link3          = 1, 1, 1 # [m]
 mass1, mass2, mass3          = 1.2, 1.2, 2.0 #[kg]
-timeStart, timeEnd, stepSize = 0.0, 10.0, 0.05 # [s] 
+timeStart, timeEnd, stepSize = 0.0, 10.0, 0.05 # [s]
 krB, crB, krC, crC           = 1.0, 1.0, 1.0, 1.0 # [Nm/rad], [Nms/rad]
 
 # initial conditions
@@ -70,7 +70,7 @@ inertiaJ3 = calMod.inertiaRod(mass3, link3)
 massVector = np.array([[mass1], [mass1], [inertiaJ1],
                        [mass2], [mass2], [inertiaJ2],
                        [mass3], [mass3], [inertiaJ3]])
-mass_Matrix =  calMod.massMatrix(massVector) 
+mass_Matrix =  calMod.massMatrix(massVector)
 time = np.arange(timeStart, timeEnd, stepSize).T
 
 # 2. DEFINE GENERALIZED COORDINATES - 9x1
@@ -97,7 +97,7 @@ def mainProg():
 
     #3. NEWTON RHAPSON
     # KNOWN   : qi_indep, qiDot_indep (@ t)
-    # FIND    : 1. qi_dep, qiDot_dep, all accelerations (@ t) 
+    # FIND    : 1. qi_dep, qiDot_dep, all accelerations (@ t)
     #           2. qi_indep, qiDot_indep (@ t+1)
 
     for timeID in range(np.size(time)):
@@ -110,7 +110,7 @@ def mainProg():
             Cq, Cq_dep, Cq_indep, constraintVect = config(qi)
             q_dep = np.concatenate((qi[0:2], qi[3:5], qi[6:8]), axis = 0) # position
             q_depNew, delta_qDep_norm = conMod.positionAnalysis(constraintVect,
-                                                                Cq_dep, q_dep) 
+                                                                Cq_dep, q_dep)
             count = count + 1
             if (delta_qDep_norm<epsilon) or (count>max_iteration):
                break
@@ -127,7 +127,7 @@ def mainProg():
 
         # d. Store qDot_dep in qiDot
         qiDot[0:2], qiDot[3:5], qiDot[6:8]= qDot_dep[0:2], qDot_dep[2:4], qDot_dep[4:6]
-    
+
         # e. Find dependent acceleration (indep acc at the same time)
         qiDotDot_lamda = systemEquation(0, Cq, qi, qiDot)
 
@@ -138,7 +138,7 @@ def mainProg():
         FReact_allTime[timeID,:] = qiDotDot_lamda[n:n+nc].T
 
         # g. Calculate q, qdot, qdotdot independent @ t+1
-        qi, qiDot = rungeKutta4_AtTimeNow( qi, qiDot, systemEquation, 
+        qi, qiDot = rungeKutta4_AtTimeNow( qi, qiDot, systemEquation,
                                             stepSize, timeNow)
         iter = iter +1
         timeNow = timeNow + stepSize
@@ -162,7 +162,7 @@ def mainProg():
     plt.xlabel('time [s]')
     plt.grid(True)
     plt.legend(["omega 1", "omega 2", "omega 3"])
-    
+
     plt.figure(3)
     plt.plot(time, q_allTime[:, l2i(1, "x")])
     plt.plot(time, q_allTime[:, l2i(2, "x")])
@@ -172,7 +172,7 @@ def mainProg():
     plt.xlabel('time [s]')
     plt.grid(True)
     plt.legend(["Rx 1", "Rx 2", "Rx 3"])
-    
+
     plt.figure(4)
     plt.plot(time, -FReact_allTime[:, 1])
     plt.plot(time, -FReact_allTime[:, 3])
@@ -192,7 +192,7 @@ def mainProg():
     plt.xlabel('time [s]')
     plt.grid(True)
     plt.legend(["alpha 1", "alpha 2", "alpha 3"])
-    
+
     plt.show()
 #==========================================
 
@@ -213,6 +213,7 @@ def config(qi): #OKAY!
 
     return Cq, Cq_dep, Cq_indep, constraintVect
 
+
 def systemEquation(t, Cq, qi, qiDot):
     # Construct MCq matrix (MASS MODULE)
     massSize = mass_Matrix.shape[0]
@@ -225,12 +226,12 @@ def systemEquation(t, Cq, qi, qiDot):
 
     # Construct QeQd vector (FORCE MODULE)
     Qe = np.zeros((massSize,1), dtype = float)
-    
+
     # External Force from Weight
     Qe[l2i(1, "y")] = -mass1*gravity
     Qe[l2i(2, "y")] = -mass2*gravity
-    Qe[l2i(3, "y")] = -mass3*gravity 
-    
+    Qe[l2i(3, "y")] = -mass3*gravity
+
     # External Force from spring
     # -joint B (link 1&2)
     QSpring1B, QSpring2B = fMod.torSpring(krB, qi, 1, 2, 0)
@@ -242,7 +243,7 @@ def systemEquation(t, Cq, qi, qiDot):
     QDamp1B, QDamp2B = fMod.torDamp(crB, qiDot, 1, 2)
     # -joint C (link 2&3)
     QDamp2C, QDamp3C = fMod.torDamp(crC, qiDot, 2, 3)
-    
+
     Qe[l2i(1,"theta")]= QSpring1B + QDamp1B
     Qe[l2i(2,"theta")]= QSpring2B + QSpring2C + QDamp2B + QDamp2C
     Qe[l2i(3,"theta")]= QSpring3C + QDamp3C
@@ -251,34 +252,36 @@ def systemEquation(t, Cq, qi, qiDot):
     Qd2 = conMod.QdCalc2(qi, qiDot, u_bar_1B, u_bar_2B, 1, 2)
     Qd3 = conMod.QdCalc2(qi, qiDot, u_bar_2C, u_bar_3C, 2, 3)
     Qd = np.concatenate((-Qd1, Qd2, Qd3), axis = 0) #6x1
-    
+
     QeAug = np.concatenate((Qe, Qd), axis = 0) #15x1
     mass_MatInverse = np.linalg.inv(massAugmented)
     qiDotDot_lamda = np.dot(mass_MatInverse, QeAug)
+
     return qiDotDot_lamda
+
 
 def rungeKutta4_AtTimeNow(qi, qiDot, systemFunction, stepSize, timeNow):
     # This function works with ANY number of DOF
-    x = np.array([qi[l2i(1, "theta")], 
+    x = np.array([qi[l2i(1, "theta")],
                   qi[l2i(2, "theta")],
                   qi[l2i(3, "theta")]])
 
-    xDot = np.array([qiDot[l2i(1, "theta")], 
+    xDot = np.array([qiDot[l2i(1, "theta")],
                      qiDot[l2i(2, "theta")],
                      qiDot[l2i(3, "theta")]])
 
     y = np.concatenate((x, xDot), axis = 0)
     numberOfDOF = int(np.size(y)/2)
-    
+
     # RungeKutta4
     t1  = timeNow
     Cq, _, _, _ = config(qi)
     f_1 = systemFunction(t1, Cq, qi, qiDot)
-    k1  = np.zeros((np.size(y), 1))        
+    k1  = np.zeros((np.size(y), 1))
     for x    in range(numberOfDOF):
         k1[x]   = y[x+numberOfDOF]
         k1[x+numberOfDOF] = f_1[l2i(x+1, "theta")]
-    
+
     t2  = t1+0.5*stepSize
     y2  = y + 0.5*k1*stepSize
     for i in range(numberOfDOF):
@@ -286,11 +289,11 @@ def rungeKutta4_AtTimeNow(qi, qiDot, systemFunction, stepSize, timeNow):
         qiDot[l2i(i+1, "theta")] = y2[i+numberOfDOF]
     Cq, _, _, _ = config(qi)
     f_2 = systemFunction(t2, Cq, qi, qiDot)
-    k2  = np.zeros((np.size(y), 1))           
+    k2  = np.zeros((np.size(y), 1))
     for x    in range(numberOfDOF):
         k2[x]   = y2[x+numberOfDOF]
         k2[x+numberOfDOF] = f_2[l2i(x+1, "theta")]
-    
+
     t3  = t1+0.5*stepSize
     y3  = y + 0.5*k2*stepSize
     for i in range(numberOfDOF):
@@ -298,11 +301,11 @@ def rungeKutta4_AtTimeNow(qi, qiDot, systemFunction, stepSize, timeNow):
         qiDot[l2i(i+1, "theta")] = y3[i+numberOfDOF]
     Cq, _, _, _ = config(qi)
     f_3 = systemFunction(t3, Cq, qi, qiDot)
-    k3  = np.zeros((np.size(y), 1))           
+    k3  = np.zeros((np.size(y), 1))
     for x    in range(numberOfDOF):
         k3[x]   = y3[x+numberOfDOF]
         k3[x+numberOfDOF] = f_3[l2i(x+1, "theta")]
-    
+
     t4  = t1+stepSize
     y4  = y + k3*stepSize
     for i in range(numberOfDOF):
@@ -327,3 +330,4 @@ def rungeKutta4_AtTimeNow(qi, qiDot, systemFunction, stepSize, timeNow):
 # Run main program
 if __name__=="__main__":
     mainProg()
+

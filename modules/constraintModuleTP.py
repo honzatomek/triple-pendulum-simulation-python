@@ -4,11 +4,11 @@ from   modules.calcModuleTP   import ATransformMatrixTHETA as A_Theta, link2inde
 from   modules.calcModuleTP   import ATransformMatrix      as A_i
 
 def constraintEquation(r1A, r1B, r2B, r2C, r3C):
-    
+
     constraintVector = np.zeros((6,1))
 
     # Pin joint A
-    constraintPinA = -r1A 
+    constraintPinA = -r1A
     for i in range(np.size(constraintPinA)):
         # Equation 1-2
         constraintVector[i] = constraintPinA[i]
@@ -28,7 +28,7 @@ def constraintEquation(r1A, r1B, r2B, r2C, r3C):
     return constraintVector
 
 def jacobianMatrix(qi, u_bar_1A, u_bar_1B, u_bar_2B, u_bar_2C, u_bar_3C):
-    
+
     genCoor = np.size(qi) # number of generalized coordinates
     constEq = 6 # number of constraint equations
 
@@ -48,7 +48,7 @@ def jacobianMatrix(qi, u_bar_1A, u_bar_1B, u_bar_2B, u_bar_2C, u_bar_3C):
     jacobianMatrixCq[2:4,2:3] = Cq34_link1
     jacobianMatrixCq[2:4,3:5] = -identity2x2
     jacobianMatrixCq[2:4,5:6] = -Cq34_link2
-    
+
     # row 5-6 (r2C = r3C)
     Cq56_link2 = np.dot(A_Theta(qi[link2index(2,"theta")]), u_bar_2C)
     Cq56_link3 = np.dot(A_Theta(qi[link2index(3,"theta")]), u_bar_3C)
@@ -60,11 +60,11 @@ def jacobianMatrix(qi, u_bar_1A, u_bar_1B, u_bar_2B, u_bar_2C, u_bar_3C):
 
     # SLICING
     # a. jacobian dependent
-    jacobian_dependent = np.concatenate((jacobianMatrixCq[:,0:2], 
+    jacobian_dependent = np.concatenate((jacobianMatrixCq[:,0:2],
                                          jacobianMatrixCq[:,3:5],
                                          jacobianMatrixCq[:,6:8]), axis = 1)
     # b. jacobian independent
-    jacobian_independent = np.concatenate((jacobianMatrixCq[:,2:3], 
+    jacobian_independent = np.concatenate((jacobianMatrixCq[:,2:3],
                                            jacobianMatrixCq[:,5:6],
                                            jacobianMatrixCq[:,8:9]), axis = 1)
 
@@ -81,9 +81,9 @@ def positionAnalysis(constraintVector, jacobianMatrix, qi):
 def QdCalc1(qi, qiDot, u_bar_iP, i):
     id = link2index(i, "theta")
     Qd = np.square(float(qiDot[id]))*np.dot(A_i(qi[id]), u_bar_iP)
-    return Qd 
+    return Qd
 
-def QdCalc2(qi, qiDot, u_bar_iP, u_bar_jP, i, j): 
+def QdCalc2(qi, qiDot, u_bar_iP, u_bar_jP, i, j):
     id = link2index(i, "theta")
     jd = link2index(j, "theta")
     Qda = np.square(float(qiDot[id]))*np.dot(A_i(qi[id]), u_bar_iP)
@@ -93,5 +93,6 @@ def QdCalc2(qi, qiDot, u_bar_iP, u_bar_jP, i, j):
 
 def revolutJoint (riP, riJ):
     constraintPin = riP-riJ
-    
+
     return constraintPin
+
